@@ -1,0 +1,94 @@
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Receiver
+metadata:
+  name: shouft-dev-imagerepo-receiver
+  namespace: shouft-dev
+spec:
+  type: harbor
+  secretRef:
+    name: shouft-dev-webhook-token
+  resources:
+    - kind: ImageRepository
+      name: dev-auth-service
+      namespace: shouft-dev
+    - kind: ImageRepository
+      name: dev-basic-service
+      namespace: shouft-dev
+    - kind: ImageRepository
+      name: dev-calculate-service
+      namespace: shouft-dev
+    - kind: ImageRepository
+      name: dev-copartner-service
+      namespace: shouft-dev
+    - kind: ImageRepository
+      name: dev-funds-service
+      namespace: shouft-dev
+    - kind: ImageRepository
+      name: dev-gateway-service
+      namespace: shouft-dev
+    - kind: ImageRepository
+      name: dev-machine-service
+      namespace: shouft-dev
+    - kind: ImageRepository
+      name: dev-proceeds-service
+      namespace: shouft-dev
+    - kind: ImageRepository
+      name: dev-resource-service
+      namespace: shouft-dev
+    - kind: ImageRepository
+      name: dev-search-service
+      namespace: shouft-dev
+    - kind: ImageRepository
+      name: dev-settle-service
+      namespace: shouft-dev
+    - kind: ImageRepository
+      name: dev-merchant-service
+    - kind: ImageRepository
+      name: dev-search-service
+      namespace: shouft-dev
+    - kind: ImageRepository
+      name: dev-wechat-service
+      namespace: shouft-dev
+    - kind: ImageRepository
+      name: dev-posp-api
+      namespace: shouft-dev
+    # plug
+    - kind: ImageRepository
+      name: dev-leaf-plug-service
+      namespace: shouft-dev
+    - kind: ImageRepository
+      name: dev-support-plug-service
+      namespace: shouft-dev
+    - kind: ImageRepository
+      name: dev-canal-plug-service
+      namespace: shouft-dev
+    - kind: ImageRepository
+      name: dev-job-plug-service
+      namespace: shouft-dev
+    - kind: ImageRepository
+      name: dev-front-admin
+      namespace: shouft-dev
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shouft-dev-receiver
+  namespace: shouft-dev
+spec:
+  type: ClusterIP
+  selector:
+    app: notification-controller
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 9292
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: shouft-dev-webhook-token
+  namespace: shouft-dev
+type: Opaque
+data:
+  token: ZDQwNTRlNWY2NTgyMjE1MjA2MWE3NzUzYzJmNWE5MGExOWRkNjIyMw==

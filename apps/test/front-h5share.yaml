@@ -1,0 +1,70 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: test-front-h5share
+  namespace: shouft-test
+spec:
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ../charts/test/frontservice
+      sourceRef:
+        kind: GitRepository
+        name: shouft
+        namespace: gitops-system
+  interval: 1m0s
+  targetNamespace: shouft-test
+  values:
+    nameOverride: front-h5share
+    fullnameOverride: front-h5share
+    image:
+      repository: harbor.zfmgr.top/zhongzf/shouft-front-h5share
+      tag: 1.0.0-beta.20230413024000 # {"$imagepolicy": "shouft-test:test-front-h5share:tag"}
+    ingress:
+      enabled: true
+      annotations:
+        kubernetes.io/ingress.class: nginx
+        # kubernetes.io/tls-acme: "true"
+      tls:
+      - secretName: tls-secret-zfmgr-top
+        hosts:
+        - test-shouft-h5share.zfmgr.top
+      hosts:
+      - host: test-shouft-h5share.zfmgr.top
+        secretName: tls-secret-zfmgr-top
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            serviceName: front-h5share
+            servicePort: 80
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageRepository
+metadata:
+  name: test-front-h5share
+  namespace: shouft-test
+spec:
+  image: harbor.zfmgr.top/zhongzf/shouft-front-h5share
+  interval: 1m0s
+  secretRef:
+    name: harborcred
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImagePolicy
+metadata:
+  name: test-front-h5share
+  namespace: shouft-test
+spec:
+  imageRepositoryRef:
+    name: test-front-h5share
+  filterTags:
+    pattern: '.*-beta.*'
+  policy:
+    semver:
+      range: '>0.x.x-beta.x'

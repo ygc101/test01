@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "canal-server.fullname" . }}
+  labels:
+    {{- include "canal-server.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: 11110
+      targetPort: 11110
+      protocol: TCP
+      name: canal-admin
+    - port: 11111
+      targetPort: http
+      protocol: TCP
+      name: canal-sync
+    - port: 11112
+      targetPort: http
+      protocol: TCP
+      name: canal-metric
+  selector:
+    {{- include "canal-server.selectorLabels" . | nindent 4 }}

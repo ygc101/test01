@@ -1,0 +1,64 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: dev-open-service
+  namespace: shouft-dev
+spec:
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ../charts/dev/microservice
+      sourceRef:
+        kind: GitRepository
+        name: shouft
+        namespace: gitops-system
+  interval: 1m0s
+  targetNamespace: shouft-dev
+  values:
+    nameOverride: open-service
+    fullnameOverride: open-service
+    image:
+      repository: harbor.zfmgr.top/zhongzf/shouft-service-open
+      tag: 1.0.0-alpha.20230407154436 # {"$imagepolicy": "shouft-dev:dev-open-service:tag"}
+    service:
+      port: 80
+      targetPort: 7013
+    startupProbe:
+      httpGet:
+        port: 7013
+    livenessProbe:
+      httpGet:
+        port: 7013
+    readinessProbe:
+      httpGet:
+        port: 7013
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageRepository
+metadata:
+  name: dev-open-service
+  namespace: shouft-dev
+spec:
+  image: harbor.zfmgr.top/zhongzf/shouft-service-open
+  interval: 1m0s
+  secretRef:
+    name: harborcred
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImagePolicy
+metadata:
+  name: dev-open-service
+  namespace: shouft-dev
+spec:
+  imageRepositoryRef:
+    name: dev-open-service
+  filterTags:
+    pattern: '.*-alpha.*'
+  policy:
+    semver:
+      range: '>0.x.x-alpha.x'

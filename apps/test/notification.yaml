@@ -1,0 +1,96 @@
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Provider
+metadata:
+  name: shouft-test-provider
+  namespace: shouft-test
+spec:
+  type: generic
+  address: http://support-plug-service.shouft-test.svc.cluster.local/notify/release?ns=shouft-test
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Alert
+metadata:
+  name: shouft-test-alert
+  namespace: shouft-test
+spec:
+  providerRef:
+    name: shouft-test-provider
+  eventSeverity: info
+  eventSources:
+    - kind: HelmRelease
+      name: test-agentsync-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-auth-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-basic-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-calculate-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-copartner-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-funds-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-gateway-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-machine-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-merchant-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-open-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-proceeds-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-resource-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-search-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-settle-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-shandchannel-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-wechat-service
+      namespace: shouft-test
+    # plugins
+    - kind: HelmRelease
+      name: test-canal-plug-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-job-plug-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-leaf-plug-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-support-plug-service
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-canal-server
+      namespace: shouft-test
+    # front
+    - kind: HelmRelease
+      name: test-front-admin
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-front-agent
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-front-h5share
+      namespace: shouft-test
+    - kind: HelmRelease
+      name: test-front-wxmer
+      namespace: shouft-test

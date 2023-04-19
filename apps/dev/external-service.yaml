@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-mq
+  namespace: shouft-dev
+spec:
+  type: ExternalName
+  externalName: shoufttest.zfmgr.top

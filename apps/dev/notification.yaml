@@ -1,0 +1,99 @@
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Provider
+metadata:
+  name: shouft-dev-provider
+  namespace: shouft-dev
+spec:
+  type: generic
+  address: http://support-plug-service.shouft-dev.svc.cluster.local/notify/release?ns=shouft-dev
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Alert
+metadata:
+  name: shouft-dev-alert
+  namespace: shouft-dev
+spec:
+  providerRef:
+    name: shouft-dev-provider
+  eventSeverity: info
+  eventSources:
+    - kind: HelmRelease
+      name: dev-agentsync-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-auth-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-basic-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-calculate-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-copartner-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-funds-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-gateway-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-machine-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-merchant-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-open-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-proceeds-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-resource-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-search-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-settle-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-shandchannel-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-wechat-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-posp-api
+      namespace: shouft-dev
+    # plugins
+    - kind: HelmRelease
+      name: dev-canal-plug-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-job-plug-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-leaf-plug-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-support-plug-service
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-canal-server
+      namespace: shouft-dev
+    # front
+    - kind: HelmRelease
+      name: dev-front-admin
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-front-agent
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-front-h5share
+      namespace: shouft-dev
+    - kind: HelmRelease
+      name: dev-front-wxmer
+      namespace: shouft-dev

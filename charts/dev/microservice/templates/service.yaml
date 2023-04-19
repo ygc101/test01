@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "microservice.fullname" . }}
+  labels:
+    {{- include "microservice.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+      protocol: TCP
+      name: {{ .Values.service.portName }}
+    {{if .Values.service.job.enabled -}}
+    - port: {{ .Values.service.job.port }}
+      targetPort: {{ .Values.service.job.targetPort }}
+      protocol: {{ .Values.service.job.protocol }}
+      name: {{ .Values.service.job.portName }}
+    {{- end }}
+  selector:
+    {{- include "microservice.selectorLabels" . | nindent 4 }}

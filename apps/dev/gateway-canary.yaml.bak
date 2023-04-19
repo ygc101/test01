@@ -1,0 +1,98 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: dev-gateway-canary
+  namespace: gitops-system
+spec:
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ./charts/dev/gatewayservice
+      sourceRef:
+        kind: GitRepository
+        name: gitops-system
+  interval: 1m0s
+  targetNamespace: sdmgrv2-dev
+  values:
+    replicaCount: 1
+    nameOverride: gateway-canary
+    fullnameOverride: gateway-canary
+    image:
+      repository: harbor.zfmgr.top/sdmgrv2/sdmgr-canary-gateway
+      tag: 2.0.0-alpha.20211130180930 # {"$imagepolicy": "gitops-system:dev-gateway-canary:tag"}
+    service:
+      port: 80
+      targetPort: 7000
+    startupProbe:
+      httpGet:
+        port: 7000
+    livenessProbe:
+      httpGet:
+        port: 7000
+    readinessProbe:
+      httpGet:
+        port: 7000
+    ingress:
+      enabled: true
+      annotations:
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/rewrite-target: /$1
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"
+        kubernetes.io/ingress.class: nginx
+        nginx.ingress.kubernetes.io/client-body-buffer-size: "60m"
+        nginx.ingress.kubernetes.io/proxy-body-size: "60m"
+        # kubernetes.io/tls-acme: "true"
+        nginx.ingress.kubernetes.io/configuration-snippet: |
+          location ~ /actuator/prometheus {
+            return 404;
+          }
+      hosts:
+      - host: dev-sdv2-canary.zfmgr.top
+        paths:
+        - path: /api/(.*)
+          pathType: Prefix
+          backend:
+            serviceName: gateway-canary
+            servicePort: 80
+        - path: /(MP_.*)
+          pathType: Prefix
+          backend:
+            serviceName: front-wxmer
+            servicePort: 80
+      - host: dev-sdv2-mapi-canary.zfmgr.top
+        paths:
+        - path: /(.*)
+          pathType: Prefix
+          backend:
+            serviceName: gateway-canary
+            servicePort: 80
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageRepository
+metadata:
+  name: dev-gateway-canary
+  namespace: gitops-system
+spec:
+  image: harbor.zfmgr.top/sdmgrv2/sdmgr-canary-gateway
+  interval: 1m0s
+  secretRef:
+    name: harborcred
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImagePolicy
+metadata:
+  name: dev-gateway-canary
+  namespace: gitops-system
+spec:
+  imageRepositoryRef:
+    name: dev-gateway-canary
+  filterTags:
+    pattern: '.*-alpha.*'
+  policy:
+    semver:
+      range: '>0.x.x-alpha.x'

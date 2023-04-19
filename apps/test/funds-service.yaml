@@ -1,0 +1,64 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: test-funds-service
+  namespace: shouft-test
+spec:
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ../charts/test/microservice
+      sourceRef:
+        kind: GitRepository
+        name: shouft
+        namespace: gitops-system
+  interval: 1m0s
+  targetNamespace: shouft-test
+  values:
+    nameOverride: funds-service
+    fullnameOverride: funds-service
+    image:
+      repository: harbor.zfmgr.top/zhongzf/shouft-service-funds
+      tag: 1.0.0-beta.20230412162901 # {"$imagepolicy": "shouft-test:test-funds-service:tag"}
+    service:
+      port: 80
+      targetPort: 7007
+    startupProbe:
+      httpGet:
+        port: 7007
+    livenessProbe:
+      httpGet:
+        port: 7007
+    readinessProbe:
+      httpGet:
+        port: 7007
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageRepository
+metadata:
+  name: test-funds-service
+  namespace: shouft-test
+spec:
+  image: harbor.zfmgr.top/zhongzf/shouft-service-funds
+  interval: 1m0s
+  secretRef:
+    name: harborcred
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImagePolicy
+metadata:
+  name: test-funds-service
+  namespace: shouft-test
+spec:
+  imageRepositoryRef:
+    name: test-funds-service
+  filterTags:
+    pattern: '.*-beta.*'
+  policy:
+    semver:
+      range: '>0.x.x-beta.x'

@@ -1,0 +1,106 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: dev-posp-api
+  namespace: shouft-dev
+spec:
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ../charts/dev/microservice
+      sourceRef:
+        kind: GitRepository
+        name: shouft
+        namespace: gitops-system
+  interval: 1m0s
+  targetNamespace: shouft-dev
+  values:
+    nameOverride: posp-api
+    fullnameOverride: posp-api
+    image:
+      repository: harbor.zfmgr.top/zhongzf/zhongzf-posp-api
+      tag: 1.0.0-alpha.20230418115609 # {"$imagepolicy": "shouft-dev:dev-posp-api:tag"}
+    service:
+      port: 8080
+      targetPort: 8080
+    startupProbe:
+      httpGet:
+        port: 8080
+    livenessProbe:
+      httpGet:
+        port: 8080
+    readinessProbe:
+      httpGet:
+        port: 8080
+    env:
+    - name: TZ
+      value: Asia/Shanghai
+    - name: SPRING_PROFILES_ACTIVE
+      value: dev
+    - name: JAVA_TOOL_OPTIONS
+      value: -Xms768M -Xmx768M -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Dhttp.proxyHost=8.129.108.251 -Dhttp.proxyPort=8128 -Dhttps.proxyHost=8.129.108.251 -Dhttps.proxyPort=8128 -Dhttp.nonProxyHosts=\"localhost|127.0.0.1|172.*|10.*|192.*|*.cluster.local|*.zfmgr.top|*service\"
+    ingress:
+      enabled: true
+      annotations:
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/rewrite-target: /$1
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"
+        kubernetes.io/ingress.class: nginx
+        nginx.ingress.kubernetes.io/client-body-buffer-size: "60m"
+        nginx.ingress.kubernetes.io/proxy-body-size: "60m"
+        # kubernetes.io/tls-acme: "true"
+        nginx.ingress.kubernetes.io/ssl-redirect: "false"
+        nginx.ingress.kubernetes.io/configuration-snippet: |
+          # location ~ /actuator/prometheus {
+          #   return 404;
+          # }
+      tls:
+      - secretName: tls-secret-zfmgr-top
+        hosts:
+        # - sync-zhongzf.zfmgr.top
+        - dev-shouft-pospapi.zfmgr.top
+      hosts:
+      # - host: sync-zhongzf.zfmgr.top
+      #   paths:
+      #   - path: /api/(.*)
+      #     pathType: Prefix
+      #     backend:
+      #       serviceName: posp-api
+      #       servicePort: 8080
+      - host: dev-shouft-pospapi.zfmgr.top
+        paths:
+        - path: /api/(.*)
+          pathType: Prefix
+          backend:
+            serviceName: posp-api
+            servicePort: 8080
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageRepository
+metadata:
+  name: dev-posp-api
+  namespace: shouft-dev
+spec:
+  image: harbor.zfmgr.top/zhongzf/zhongzf-posp-api
+  interval: 1m0s
+  secretRef:
+    name: harborcred
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImagePolicy
+metadata:
+  name: dev-posp-api
+  namespace: shouft-dev
+spec:
+  imageRepositoryRef:
+    name: dev-posp-api
+  filterTags:
+    pattern: '.*-alpha.*'
+  policy:
+    semver:
+      range: '>0.x.x-alpha.x'

@@ -1,0 +1,37 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+# core service
+- agentsync-service.yaml
+- auth-service.yaml
+- basic-service.yaml
+- calculate-service.yaml
+- copartner-service.yaml
+- funds-service.yaml
+- gateway-service.yaml
+- machine-service.yaml
+- merchant-service.yaml
+- open-service.yaml
+- proceeds-service.yaml
+- resource-service.yaml
+- search-service.yaml
+- shandchannel-service.yaml
+- wechat-service.yaml
+- posp-api.yaml
+# front service
+- front-admin.yaml
+- front-agent.yaml
+- front-h5share.yaml
+# - front-wxmer.yaml
+# middleware
+- support-plug-service.yaml
+- canal-plug-service.yaml
+- job-plug-service.yaml
+- leaf-plug-service.yaml
+- canal-server.yaml
+# fluxcd
+- imagerepo-receiver.yaml
+- imageupdate-automation.yaml
+- notification.yaml
+# canary
+# - gateway-canary.yaml

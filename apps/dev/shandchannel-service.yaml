@@ -1,0 +1,81 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: dev-shandchannel-service
+  namespace: shouft-dev
+spec:
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ../charts/dev/microservice
+      sourceRef:
+        kind: GitRepository
+        name: shouft
+        namespace: gitops-system
+  interval: 1m0s
+  targetNamespace: shouft-dev
+  values:
+    nameOverride: shandchannel-service
+    fullnameOverride: shandchannel-service
+    image:
+      repository: harbor.zfmgr.top/zhongzf/shouft-service-shandchannel
+      tag: 1.0.0-alpha.20230308120002 # {"$imagepolicy": "shouft-dev:dev-shandchannel-service:tag"}
+    service:
+      port: 80
+      targetPort: 7014
+    startupProbe:
+      httpGet:
+        port: 7014
+    livenessProbe:
+      httpGet:
+        port: 7014
+    readinessProbe:
+      httpGet:
+        port: 7014
+    env:
+    - name: TZ
+      value: Asia/Shanghai
+    - name: SPRING_PROFILES_ACTIVE
+      value: dev
+    - name: JAVA_TOOL_OPTIONS
+      value: -Xms768M -Xmx768M -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap
+    - name: SPRING_CLOUD_NACOS_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: nacos-client-secret
+          key: username
+    - name: SPRING_CLOUD_NACOS_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: nacos-client-secret
+          key: password
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageRepository
+metadata:
+  name: dev-shandchannel-service
+  namespace: shouft-dev
+spec:
+  image: harbor.zfmgr.top/zhongzf/shouft-service-shandchannel
+  interval: 1m0s
+  secretRef:
+    name: harborcred
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImagePolicy
+metadata:
+  name: dev-shandchannel-service
+  namespace: shouft-dev
+spec:
+  imageRepositoryRef:
+    name: dev-shandchannel-service
+  filterTags:
+    pattern: '.*-alpha.*'
+  policy:
+    semver:
+      range: '>0.x.x-alpha.x'

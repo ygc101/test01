@@ -1,0 +1,67 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: test-canal-plug-service
+  namespace: shouft-test
+spec:
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ../charts/test/microservice
+      sourceRef:
+        kind: GitRepository
+        name: shouft
+        namespace: gitops-system
+  interval: 1m0s
+  targetNamespace: shouft-test
+  values:
+    strategyType: Recreate
+    nameOverride: canal-plug-service
+    fullnameOverride: canal-plug-service
+    image:
+      repository: harbor.zfmgr.top/zhongzf/shouft-plug-canal
+      tag: 1.0.0-beta.20230321162752 # {"$imagepolicy": "shouft-test:test-canal-plug-service:tag"}
+    service:
+      port: 80
+      targetPort: 10040
+      job:
+        enabled: true
+    startupProbe:
+      httpGet:
+        port: 10040
+    livenessProbe:
+      httpGet:
+        port: 10040
+    readinessProbe:
+      httpGet:
+        port: 10040
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageRepository
+metadata:
+  name: test-canal-plug-service
+  namespace: shouft-test
+spec:
+  image: harbor.zfmgr.top/zhongzf/shouft-plug-canal
+  interval: 1m0s
+  secretRef:
+    name: harborcred
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImagePolicy
+metadata:
+  name: test-canal-plug-service
+  namespace: shouft-test
+spec:
+  imageRepositoryRef:
+    name: test-canal-plug-service
+  filterTags:
+    pattern: '.*-beta.*'
+  policy:
+    semver:
+      range: '>0.x.x-beta.x'

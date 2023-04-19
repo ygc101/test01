@@ -1,0 +1,66 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: test-machine-service
+  namespace: shouft-test
+spec:
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ../charts/test/microservice
+      sourceRef:
+        kind: GitRepository
+        name: shouft
+        namespace: gitops-system
+  interval: 1m0s
+  targetNamespace: shouft-test
+  values:
+    nameOverride: machine-service
+    fullnameOverride: machine-service
+    image:
+      repository: harbor.zfmgr.top/zhongzf/shouft-service-machine
+      tag: 1.0.0-beta.20230417101103 # {"$imagepolicy": "shouft-test:test-machine-service:tag"}
+    service:
+      port: 80
+      targetPort: 7003
+      job:
+        enabled: true
+    startupProbe:
+      httpGet:
+        port: 7003
+    livenessProbe:
+      httpGet:
+        port: 7003
+    readinessProbe:
+      httpGet:
+        port: 7003
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageRepository
+metadata:
+  name: test-machine-service
+  namespace: shouft-test
+spec:
+  image: harbor.zfmgr.top/zhongzf/shouft-service-machine
+  interval: 1m0s
+  secretRef:
+    name: harborcred
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImagePolicy
+metadata:
+  name: test-machine-service
+  namespace: shouft-test
+spec:
+  imageRepositoryRef:
+    name: test-machine-service
+  filterTags:
+    pattern: '.*-beta.*'
+  policy:
+    semver:
+      range: '>0.x.x-beta.x'

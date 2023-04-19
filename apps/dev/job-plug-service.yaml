@@ -1,0 +1,80 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: dev-job-plug-service
+  namespace: shouft-dev
+spec:
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ../charts/dev/microservice
+      sourceRef:
+        kind: GitRepository
+        name: shouft
+        namespace: gitops-system
+  interval: 1m0s
+  targetNamespace: shouft-dev
+  values:
+    nameOverride: job-plug-service
+    fullnameOverride: job-plug-service
+    image:
+      repository: harbor.zfmgr.top/zhongzf/shouft-plug-job
+      tag: 1.0.0-alpha.20230412163102 # {"$imagepolicy": "shouft-dev:dev-job-plug-service:tag"}
+    service:
+      port: 80
+      targetPort: 10060
+    startupProbe:
+      httpGet:
+        path: /job/actuator/health/liveness
+        port: 10060
+    livenessProbe:
+      httpGet:
+        path: /job/actuator/health/liveness
+        port: 10060
+    readinessProbe:
+      httpGet:
+        path: /job/actuator/health/readiness
+        port: 10060
+    ingress:
+      enabled: true
+      annotations:
+        kubernetes.io/ingress.class: nginx
+        nginx.ingress.kubernetes.io/client-body-buffer-size: 60m
+      hosts:
+      - host: dev-shouft-job.zfmgr.top
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            serviceName: job-plug-service
+            servicePort: 80
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageRepository
+metadata:
+  name: dev-job-plug-service
+  namespace: shouft-dev
+spec:
+  image: harbor.zfmgr.top/zhongzf/shouft-plug-job
+  interval: 1m0s
+  secretRef:
+    name: harborcred
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImagePolicy
+metadata:
+  name: dev-job-plug-service
+  namespace: shouft-dev
+spec:
+  imageRepositoryRef:
+    name: dev-job-plug-service
+  filterTags:
+    pattern: '.*-alpha.*'
+  policy:
+    semver:
+      range: '>0.x.x-alpha.x'

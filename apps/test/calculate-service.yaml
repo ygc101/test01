@@ -1,0 +1,64 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: test-calculate-service
+  namespace: shouft-test
+spec:
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ../charts/test/microservice
+      sourceRef:
+        kind: GitRepository
+        name: shouft
+        namespace: gitops-system
+  interval: 1m0s
+  targetNamespace: shouft-test
+  values:
+    nameOverride: calculate-service
+    fullnameOverride: calculate-service
+    image:
+      repository: harbor.zfmgr.top/zhongzf/shouft-service-calculate
+      tag: 1.0.0-beta.20230419142219 # {"$imagepolicy": "shouft-test:test-calculate-service:tag"}
+    service:
+      port: 80
+      targetPort: 7006
+    startupProbe:
+      httpGet:
+        port: 7006
+    livenessProbe:
+      httpGet:
+        port: 7006
+    readinessProbe:
+      httpGet:
+        port: 7006
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageRepository
+metadata:
+  name: test-calculate-service
+  namespace: shouft-test
+spec:
+  image: harbor.zfmgr.top/zhongzf/shouft-service-calculate
+  interval: 1m0s
+  secretRef:
+    name: harborcred
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImagePolicy
+metadata:
+  name: test-calculate-service
+  namespace: shouft-test
+spec:
+  imageRepositoryRef:
+    name: test-calculate-service
+  filterTags:
+    pattern: '.*-beta.*'
+  policy:
+    semver:
+      range: '>0.x.x-beta.x'

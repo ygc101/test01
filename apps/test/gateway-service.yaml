@@ -1,0 +1,109 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: test-gateway-service
+  namespace: shouft-test
+spec:
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ../charts/test/gatewayservice
+      sourceRef:
+        kind: GitRepository
+        name: shouft
+        namespace: gitops-system
+  interval: 1m0s
+  targetNamespace: shouft-test
+  values:
+    nameOverride: gateway-service
+    fullnameOverride: gateway-service
+    image:
+      repository: harbor.zfmgr.top/zhongzf/shouft-service-gateway
+      tag: 1.0.0-beta.20230414095641 # {"$imagepolicy": "shouft-test:test-gateway-service:tag"}
+    service:
+      port: 80
+      targetPort: 7000
+    startupProbe:
+      httpGet:
+        port: 7000
+    livenessProbe:
+      httpGet:
+        port: 7000
+    readinessProbe:
+      httpGet:
+        port: 7000
+    ingress:
+      enabled: true
+      annotations:
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/rewrite-target: /$1
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"
+        kubernetes.io/ingress.class: nginx
+        nginx.ingress.kubernetes.io/client-body-buffer-size: "60m"
+        nginx.ingress.kubernetes.io/proxy-body-size: "60m"
+        # kubernetes.io/tls-acme: "true"
+        nginx.ingress.kubernetes.io/ssl-redirect: "false"
+        nginx.ingress.kubernetes.io/configuration-snippet: |
+          # location ~ /actuator/prometheus {
+          #   return 404;
+          # }
+      tls:
+      - secretName: tls-secret-zfmgr-top
+        hosts:
+        - test-shouft.zfmgr.top
+        - test-shouft-mapi.zfmgr.top
+      hosts:
+      - host: test-shouft.zfmgr.top
+        paths:
+        - path: /api/(.*)
+          pathType: Prefix
+          backend:
+            serviceName: gateway-service
+            servicePort: 80
+        - path: /(MP_.*)
+          pathType: Prefix
+          backend:
+            serviceName: front-wxmer
+            servicePort: 80
+        - path: /open/(.*)
+          pathType: Prefix
+          backend:
+            serviceName: open-service
+            servicePort: 80
+      - host: test-shouft-mapi.zfmgr.top
+        paths:
+        - path: /(.*)
+          pathType: Prefix
+          backend:
+            serviceName: gateway-service
+            servicePort: 80
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageRepository
+metadata:
+  name: test-gateway-service
+  namespace: shouft-test
+spec:
+  image: harbor.zfmgr.top/zhongzf/shouft-service-gateway
+  interval: 1m0s
+  secretRef:
+    name: harborcred
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImagePolicy
+metadata:
+  name: test-gateway-service
+  namespace: shouft-test
+spec:
+  imageRepositoryRef:
+    name: test-gateway-service
+  filterTags:
+    pattern: '.*-beta.*'
+  policy:
+    semver:
+      range: '>0.x.x-beta.x'

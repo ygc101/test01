@@ -1,0 +1,52 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: dev-canal-server
+  namespace: shouft-dev
+spec:
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ../charts/dev/canal-server
+      sourceRef:
+        kind: GitRepository
+        name: shouft
+        namespace: gitops-system
+  interval: 1m0s
+  targetNamespace: shouft-dev
+  values:
+    nameOverride: canal-server
+    fullnameOverride: canal-server
+    image:
+      repository: harbor.zfmgr.top/zhongzf/shouft-canal-server
+      tag: 1.0.0-alpha.2 # {"$imagepolicy": "shouft-dev:dev-canal-server:tag"}
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageRepository
+metadata:
+  name: dev-canal-server
+  namespace: shouft-dev
+spec:
+  image: harbor.zfmgr.top/zhongzf/shouft-canal-server
+  interval: 1m0s
+  secretRef:
+    name: harborcred
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImagePolicy
+metadata:
+  name: dev-canal-server
+  namespace: shouft-dev
+spec:
+  imageRepositoryRef:
+    name: dev-canal-server
+  filterTags:
+    pattern: '.*-alpha.*'
+  policy:
+    semver:
+      range: '>0.x.x-alpha.x'

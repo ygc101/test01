@@ -1,0 +1,64 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: test-wechat-service
+  namespace: shouft-test
+spec:
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ../charts/test/microservice
+      sourceRef:
+        kind: GitRepository
+        name: shouft
+        namespace: gitops-system
+  interval: 1m0s
+  targetNamespace: shouft-test
+  values:
+    nameOverride: wechat-service
+    fullnameOverride: wechat-service
+    image:
+      repository: harbor.zfmgr.top/zhongzf/shouft-service-wechat
+      tag: 1.0.0-beta.20230404163235 # {"$imagepolicy": "shouft-test:test-wechat-service:tag"}
+    service:
+      port: 80
+      targetPort: 7012
+    startupProbe:
+      httpGet:
+        port: 7012
+    livenessProbe:
+      httpGet:
+        port: 7012
+    readinessProbe:
+      httpGet:
+        port: 7012
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageRepository
+metadata:
+  name: test-wechat-service
+  namespace: shouft-test
+spec:
+  image: harbor.zfmgr.top/zhongzf/shouft-service-wechat
+  interval: 1m0s
+  secretRef:
+    name: harborcred
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImagePolicy
+metadata:
+  name: test-wechat-service
+  namespace: shouft-test
+spec:
+  imageRepositoryRef:
+    name: test-wechat-service
+  filterTags:
+    pattern: '.*-beta.*'
+  policy:
+    semver:
+      range: '>0.x.x-beta.x'

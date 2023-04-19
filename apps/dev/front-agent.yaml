@@ -1,0 +1,70 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: dev-front-agent
+  namespace: shouft-dev
+spec:
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  chart:
+    spec:
+      chart: ../charts/dev/frontservice
+      sourceRef:
+        kind: GitRepository
+        name: shouft
+        namespace: gitops-system
+  interval: 1m0s
+  targetNamespace: shouft-dev
+  values:
+    nameOverride: front-agent
+    fullnameOverride: front-agent
+    image:
+      repository: harbor.zfmgr.top/zhongzf/shouft-front-agent
+      tag: 1.0.0-alpha.20230322103519 # {"$imagepolicy": "shouft-dev:dev-front-agent:tag"}
+    ingress:
+      enabled: true
+      annotations:
+        kubernetes.io/ingress.class: nginx
+        # kubernetes.io/tls-acme: "true"
+      tls:
+      - secretName: tls-secret-zfmgr-top
+        hosts:
+        - dev-shouft-agent.zfmgr.top
+      hosts:
+      - host: dev-shouft-agent.zfmgr.top
+        secretName: tls-secret-zfmgr-top
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            serviceName: front-agent
+            servicePort: 80
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageRepository
+metadata:
+  name: dev-front-agent
+  namespace: shouft-dev
+spec:
+  image: harbor.zfmgr.top/zhongzf/shouft-front-agent
+  interval: 1m0s
+  secretRef:
+    name: harborcred
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImagePolicy
+metadata:
+  name: dev-front-agent
+  namespace: shouft-dev
+spec:
+  imageRepositoryRef:
+    name: dev-front-agent
+  filterTags:
+    pattern: '.*-alpha.*'
+  policy:
+    semver:
+      range: '>0.x.x-alpha.x'
